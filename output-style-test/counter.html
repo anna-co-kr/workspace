@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>카운터 앱</title>
+    <!-- Tailwind CSS를 CDN으로 불러옵니다 -->
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen flex items-center justify-center">
+    <!-- 전체 컨테이너: 가운데 정렬된 박스 -->
+    <div class="bg-white rounded-lg shadow-2xl p-8 w-full max-w-md">
+
+        <!-- 제목 -->
+        <h1 class="text-3xl font-bold text-center text-gray-800 mb-8">카운터 앱</h1>
+
+        <!-- 카운트 표시 영역: 큰 숫자를 보여줍니다 -->
+        <div class="bg-gradient-to-r from-blue-100 to-indigo-100 rounded-lg p-8 mb-8 border-2 border-blue-300">
+            <p class="text-center text-gray-600 text-sm mb-2">현재 카운트</p>
+            <p id="counter" class="text-center text-6xl font-bold text-blue-600">0</p>
+        </div>
+
+        <!-- 버튼들을 감싸는 컨테이너 -->
+        <div class="space-y-3">
+            <!-- 증가 버튼: 파란색 계열 -->
+            <button id="increaseBtn" class="w-full bg-blue-500 hover:bg-blue-600 active:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg transition duration-200 transform hover:scale-105">
+                + 1 증가
+            </button>
+
+            <!-- 감소 버튼: 파란색 계열 (좀 더 옅은 색) -->
+            <button id="decreaseBtn" class="w-full bg-blue-400 hover:bg-blue-500 active:bg-blue-600 text-white font-bold py-3 px-4 rounded-lg transition duration-200 transform hover:scale-105">
+                - 1 감소
+            </button>
+
+            <!-- 리셋 버튼: 파란색 계열 (가장 옅은 색) -->
+            <button id="resetBtn" class="w-full bg-indigo-500 hover:bg-indigo-600 active:bg-indigo-700 text-white font-bold py-3 px-4 rounded-lg transition duration-200 transform hover:scale-105">
+                🔄 리셋
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // 카운터 값을 저장할 변수입니다
+        // 이 변수가 현재 몇까지 세어졌는지를 나타냅니다
+        let count = 0;
+
+        // HTML에서 필요한 요소들을 가져옵니다
+        // document.getElementById()는 ID로 HTML 요소를 찾는 함수입니다
+        const counterDisplay = document.getElementById('counter'); // 숫자를 표시할 영역
+        const increaseBtn = document.getElementById('increaseBtn'); // 증가 버튼
+        const decreaseBtn = document.getElementById('decreaseBtn'); // 감소 버튼
+        const resetBtn = document.getElementById('resetBtn');       // 리셋 버튼
+
+        // 화면에 카운트를 표시하는 함수입니다
+        // 변수 count의 값을 화면의 숫자 부분에 반영합니다
+        function updateDisplay() {
+            counterDisplay.textContent = count;
+        }
+
+        // 증가 버튼을 클릭했을 때 실행될 함수입니다
+        // 클릭할 때마다 count를 1씩 늘립니다
+        increaseBtn.addEventListener('click', function() {
+            count++; // count = count + 1 과 같은 의미입니다
+            updateDisplay(); // 화면을 업데이트합니다
+        });
+
+        // 감소 버튼을 클릭했을 때 실행될 함수입니다
+        // 클릭할 때마다 count를 1씩 줄입니다
+        decreaseBtn.addEventListener('click', function() {
+            count--; // count = count - 1 과 같은 의미입니다
+            updateDisplay(); // 화면을 업데이트합니다
+        });
+
+        // 리셋 버튼을 클릭했을 때 실행될 함수입니다
+        // count를 0으로 돌려놓습니다 (처음 상태로 돌아갑니다)
+        resetBtn.addEventListener('click', function() {
+            count = 0; // count를 0으로 초기화합니다
+            updateDisplay(); // 화면을 업데이트합니다
+        });
+    </script>
+</body>
+</html>

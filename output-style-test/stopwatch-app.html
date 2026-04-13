@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>스톱워치 앱</title>
+    <!-- Tailwind CSS 라이브러리를 온라인에서 가져옵니다 -->
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gradient-to-br from-black via-gray-900 to-black min-h-screen flex items-center justify-center p-4">
+    <!-- 메인 컨테이너: 스톱워치 전체를 감싸는 부분 -->
+    <div class="w-full max-w-sm">
+        <!-- 외부 카드 (그림자와 배경) -->
+        <div class="bg-gradient-to-br from-gray-900 to-gray-950 rounded-3xl shadow-2xl p-8 border border-gray-700">
+
+            <!-- 제목 -->
+            <h1 class="text-center text-white text-2xl font-bold mb-8 tracking-widest">⏱️ 스톱워치</h1>
+
+            <!-- 시간 표시 영역: 가장 중요한 부분입니다 -->
+            <div class="bg-gray-800/50 rounded-2xl p-8 mb-8 border border-gray-700 backdrop-blur-sm">
+                <!-- 시간 텍스트: 큰 디지털 숫자로 표시됩니다 -->
+                <div class="text-center">
+                    <div
+                        id="timeDisplay"
+                        class="text-5xl font-mono font-bold text-yellow-400 tracking-tight">
+                        00:00:00
+                    </div>
+                    <!-- 밀리초 표시 (더 정확한 측정을 위해) -->
+                    <div class="text-sm text-gray-400 mt-3 font-mono">
+                        밀리초: <span id="msDisplay" class="text-yellow-400">000</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 버튼 영역: 시작/일시정지와 리셋 버튼 -->
+            <div class="flex gap-4 mb-6">
+                <!-- 시작/일시정지 버튼: 스톱워치를 시작하거나 멈춥니다 -->
+                <button
+                    id="startPauseBtn"
+                    onclick="toggleStartPause()"
+                    class="flex-1 bg-gradient-to-br from-yellow-500 to-yellow-600 hover:from-yellow-400 hover:to-yellow-500 text-black font-bold py-3 px-6 rounded-xl transition-all duration-200 transform hover:scale-105 active:scale-95 shadow-lg">
+                    시작
+                </button>
+
+                <!-- 리셋 버튼: 스톱워치를 0으로 초기화합니다 -->
+                <button
+                    id="resetBtn"
+                    onclick="resetStopwatch()"
+                    class="flex-1 bg-gradient-to-br from-gray-700 to-gray-800 hover:from-gray-600 hover:to-gray-700 text-white font-bold py-3 px-6 rounded-xl transition-all duration-200 transform hover:scale-105 active:scale-95 shadow-lg">
+                    리셋
+                </button>
+            </div>
+
+            <!-- 정보 메시지: 사용 방법을 안내합니다 -->
+            <div class="text-center text-gray-400 text-sm">
+                <p>⌚ 버튼을 눌러 스톱워치를 시작하세요</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        /**
+         * 스톱워치 상태를 관리하는 변수들입니다
+         */
+        // 시작한 시간을 저장하는 변수 (null이면 아직 안 시작)
+        let startTime = null;
+        // 일시정지한 시간을 저장하는 변수 (일시정지 상태를 기록합니다)
+        let pausedTime = 0;
+        // 스톱워치가 작동 중인지 여부를 나타내는 변수
+        let isRunning = false;
+        // setInterval의 ID를 저장합니다 (나중에 멈출 때 필요)
+        let intervalId = null;
+
+        /**
+         * 시간을 밀리초에서 00:00:00 형식으로 변환하는 함수
+         * 예: 5000밀리초 → 00:00:05 (5초)
+         *
+         * @param milliseconds - 변환할 밀리초 값
+         * @returns 포맷된 시간 문자열
+         */
+        function formatTime(milliseconds) {
+            // 초 단위로 변환합니다 (1초 = 1000밀리초)
+            const totalSeconds = Math.floor(milliseconds / 1000);
+
+            // 시간, 분, 초를 계산합니다
+            const hours = Math.floor(totalSeconds / 3600);      // 3600초 = 1시간
+            const minutes = Math.floor((totalSeconds % 3600) / 60); // 남은 초를 분으로
+            const seconds = totalSeconds % 60;                   // 남은 초
+
+            // 각 값을 두 자리 수로 만듭니다 (예: 5 → 05)
+            // padStart(2, '0')은 앞에 0을 붙여줍니다
+            const h = String(hours).padStart(2, '0');
+            const m = String(minutes).padStart(2, '0');
+            const s = String(seconds).padStart(2, '0');
+
+            // "00:00:00" 형식으로 반환합니다
+            return `${h}:${m}:${s}`;
+        }
+
+        /**
+         * 밀리초 부분만 추출하는 함수
+         * 예: 5500밀리초 → 500 (소수점 버림)
+         *
+         * @param milliseconds - 전체 밀리초 값
+         * @returns 밀리초 부분 (0-999)
+         */
+        function getMsDisplay(milliseconds) {
+            // 1000으로 나눈 나머지는 1000밀리초 미만의 값입니다
+            // 앞에 0을 붙여 3자리로 만듭니다
+            return String(Math.floor(milliseconds % 1000)).padStart(3, '0');
+        }
+
+        /**
+         * 화면의 시간 표시를 업데이트하는 함수
+         * 10밀리초마다 호출되어 시간을 계속 갱신합니다
+         */
+        function updateDisplay() {
+            // 현재 경과 시간을 계산합니다
+            // 현재 시간에서 시작 시간을 빼면 경과 시간이 됩니다
+            const elapsedTime = (Date.now() - startTime) + pausedTime;
+
+            // 포맷된 시간을 화면에 표시합니다
+            document.getElementById('timeDisplay').textContent = formatTime(elapsedTime);
+            // 밀리초도 표시합니다
+            document.getElementById('msDisplay').textContent = getMsDisplay(elapsedTime);
+        }
+
+        /**
+         * 스톱워치를 시작하거나 일시정지하는 함수
+         * 버튼을 누를 때마다 상태가 바뀝니다
+         */
+        function toggleStartPause() {
+            const button = document.getElementById('startPauseBtn');
+
+            if (isRunning) {
+                // 현재 작동 중이면 → 일시정지합니다
+                clearInterval(intervalId);       // 업데이트를 멈춥니다
+                pausedTime += (Date.now() - startTime); // 지금까지의 시간을 저장합니다
+                isRunning = false;
+                button.textContent = '재개';      // 버튼 텍스트를 "재개"로 변경합니다
+                button.classList.remove('from-yellow-500', 'to-yellow-600', 'hover:from-yellow-400', 'hover:to-yellow-500');
+                button.classList.add('from-gray-700', 'to-gray-800', 'hover:from-gray-600', 'hover:to-gray-700');
+            } else {
+                // 일시정지 중이면 → 다시 시작합니다
+                startTime = Date.now();          // 새로운 시작 시간을 기록합니다
+                isRunning = true;
+                button.textContent = '일시정지'; // 버튼 텍스트를 "일시정지"로 변경합니다
+                button.classList.remove('from-gray-700', 'to-gray-800', 'hover:from-gray-600', 'hover:to-gray-700');
+                button.classList.add('from-yellow-500', 'to-yellow-600', 'hover:from-yellow-400', 'hover:to-yellow-500');
+
+                // 매 10밀리초마다 화면을 업데이트합니다 (부드러운 움직임)
+                intervalId = setInterval(updateDisplay, 10);
+            }
+        }
+
+        /**
+         * 스톱워치를 초기 상태로 되돌리는 함수
+         * 모든 값을 0으로 리셋합니다
+         */
+        function resetStopwatch() {
+            // 진행 중인 업데이트를 멈춥니다
+            clearInterval(intervalId);
+
+            // 모든 변수를 초기화합니다
+            startTime = null;
+            pausedTime = 0;
+            isRunning = false;
+
+            // 화면을 00:00:00으로 초기화합니다
+            document.getElementById('timeDisplay').textContent = '00:00:00';
+            document.getElementById('msDisplay').textContent = '000';
+
+            // 버튼을 초기 상태로 되돌립니다
+            const button = document.getElementById('startPauseBtn');
+            button.textContent = '시작';
+            button.classList.remove('from-gray-700', 'to-gray-800', 'hover:from-gray-600', 'hover:to-gray-700');
+            button.classList.add('from-yellow-500', 'to-yellow-600', 'hover:from-yellow-400', 'hover:to-yellow-500');
+        }
+    </script>
+</body>
+</html>
